@@ -9,7 +9,7 @@ import tldextract
 
 
 def getnews(directory):
-    ###Function to read news content in given directory
+    ###Function to read news content in given directory using the FakeNewsNet dataset
     dictlist = []
     cols = ['title','text','authors','num_images','domain','url']
     folders = glob.glob(directory+'/*')
@@ -23,6 +23,7 @@ def getnews(directory):
     return pd.DataFrame(dictlist,columns=cols)
 
 def scaledict(ajson):
+    #process json pulled from FakeNewsNet
     thedict = {'url':ajson['url'],'title':ajson['title'],'text':ajson['text'],'num_images':len(ajson['images']),'authors':str(ajson['authors'])}
     ext = tldextract.extract(ajson['url'])
     thedict['domain'] = ext.domain

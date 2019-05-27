@@ -11,6 +11,13 @@ Useful data science functions and classes
 """STATISTICS"""
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cluster import KMeans
+import scipy.stats as stats
+from nltk.tokenize import RegexpTokenizer
+from collections import Counter
 
 def draw_perm_reps(data_1, data_2, func, size=1):
         """Generate multiple permutation replicates."""
@@ -119,7 +126,7 @@ def evalclusters(data,ks=range(1,6)):
     """function to fit multiple KMeans models for evaluating inertia on one dataset"""
     inertias = []
     for k in ks:
-        model = sklearn.cluster.KMeans(n_clusters=k)
+        model = KMeans(n_clusters=k)
         model.fit(data)
         inertias.append(model.inertia_)
     # Plot ks vs inertias
@@ -231,4 +238,42 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     fig.tight_layout()
     ax.grid('off')
     return ax
+
+def cleanwordcounts(text):
+    #returns words counts minus stopwords from nltk and chinese characters
+    #expects pandas series or single string
+    #CountVectorizer expects iterable over raw text documents, so transform text
+    #if simple string
+    if type(text)==str:
+        text = [text,'']
     
+    stpwords = stopwords.words('english')
+    #instantiate countvectorizer
+    tokens = CountVectorizer(stop_words=stpwords,analyzer='word',token_pattern=r'\w+')
+    #transform corpus into vector space
+    textvec = pd.DataFrame(tokens.fit_transform(text).toarray())
+    #create counts dataframe
+    counts = pd.DataFrame(list(zip(tokens.get_feature_names(),textvec.sum().values)),columns=['word','counts'])
+    #remove any chinese characters
+    counts['word'] = counts['word'].str.replace(r'[^\x00-\x7F]+', '')
+    #drop rows where chinese characters residedp
+    counts.drop(counts[counts['word']==''].index, inplace=True)
+    return counts.sort_values(by=['counts'],ascending=False).reset_index(drop=True)
+
+def wordcounts(text):
+    #tokenize to words and return counts of each word, including stopwords
+    if type(text) == pd.core.series.Series:
+        text = text.str.cat(sep=' ')
+    elif type(text) != str:
+        print('Wrong data type passed to function')
+        return 0
+    tokenizer = RegexpTokenizer(r'\w+')
+    tokens = tokenizer.tokenize(text)
+    #lowercase
+    tokens = [t.lower() for t in tokens]
+    #create dict from Counter object
+    dict_tok = dict(Counter(tokens))
+    #convert to dataframe and return
+    tok = pd.DataFrame.from_dict(data=dict_tok,orient='index').reset_index()
+    tok.columns=['word','counts']
+    return tok.sort_values(by='counts',ascending=False)
