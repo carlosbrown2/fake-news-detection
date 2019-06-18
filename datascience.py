@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import confusion_matrix
 from sklearn.cluster import KMeans
 import scipy.stats as stats
 from nltk.tokenize import RegexpTokenizer
